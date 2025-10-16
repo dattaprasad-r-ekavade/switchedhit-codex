@@ -128,6 +128,15 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
                       Jersey: #{player.jerseyNumber}
                     </div>
                   )}
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Batting: <span className="font-semibold text-foreground">{player.battingSkill}</span> �?� Bowling:{' '}
+                    <span className="font-semibold text-foreground">{player.bowlingSkill}</span>
+                  </div>
+                  {player.country && (
+                    <div className="text-xs text-muted-foreground">
+                      Country: <span className="font-semibold text-foreground">{player.country}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

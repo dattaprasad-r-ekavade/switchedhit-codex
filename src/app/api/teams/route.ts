@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { revalidatePath } from 'next/cache'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateTeamPlayers } from '@/lib/player-generator'
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
@@ -64,17 +65,32 @@ export async function POST(request: Request) {
           ? parseInt(body.founded, 10)
           : null
 
-    const team = await prisma.team.create({
-      data: {
-        name,
-        shortName,
-        homeGround: body.homeGround?.trim() || null,
-        captain: body.captain?.trim() || null,
-        coach: body.coach?.trim() || null,
-        founded: Number.isNaN(foundedValue) ? null : foundedValue,
-        logoUrl: body.logoUrl?.trim() || null,
-        ownerId,
-      },
+    const team = await prisma.$transaction(async (tx) => {
+      const createdTeam = await tx.team.create({
+        data: {
+          name,
+          shortName,
+          homeGround: body.homeGround?.trim() || null,
+          captain: body.captain?.trim() || null,
+          coach: body.coach?.trim() || null,
+          founded: Number.isNaN(foundedValue) ? null : foundedValue,
+          logoUrl: body.logoUrl?.trim() || null,
+          ownerId,
+        },
+      })
+
+      const generatedPlayers = generateTeamPlayers()
+
+      if (generatedPlayers.length > 0) {
+        await tx.player.createMany({
+          data: generatedPlayers.map((player) => ({
+            ...player,
+            teamId: createdTeam.id,
+          })),
+        })
+      }
+
+      return createdTeam
     })
 
     revalidatePath('/teams')

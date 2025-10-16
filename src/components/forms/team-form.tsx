@@ -184,6 +184,10 @@ export default function TeamForm({ isAdmin = false }: TeamFormProps) {
         </div>
       )}
 
+      <p className="text-xs text-muted-foreground">
+        A balanced squad of 15 players with randomized skill ratings is generated automatically for every new team.
+      </p>
+
       <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
         {isSubmitting ? 'Creating team...' : 'Create team'}
       </Button>

@@ -37,6 +37,8 @@ model Player {
   role         String   // BATSMAN, BOWLER, ALL_ROUNDER, WICKET_KEEPER
   battingStyle String?  // RIGHT_HAND, LEFT_HAND
   bowlingStyle String?  // FAST, MEDIUM, SPIN_OFF, SPIN_LEG
+  battingSkill Int      @default(50)
+  bowlingSkill Int      @default(50)
   jerseyNumber Int?
   country      String?
   age          Int?

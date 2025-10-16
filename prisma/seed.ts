@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from '@prisma/client'
 import { hash } from 'bcryptjs'
+import { generateTeamPlayers } from '../src/lib/player-generator'
 
 const prisma = new PrismaClient()
 
@@ -66,37 +67,22 @@ async function main() {
     }
   })
 
-  // Create players for Mumbai Indians
+  const createSquad = (teamId: string) =>
+    generateTeamPlayers().map((player) => ({
+      ...player,
+      teamId,
+    }))
+
   await prisma.player.createMany({
-    data: [
-      { name: 'Rohit Sharma', role: 'BATSMAN', battingStyle: 'RIGHT_HAND', jerseyNumber: 45, country: 'India', age: 36, teamId: mumbaiIndians.id },
-      { name: 'Ishan Kishan', role: 'WICKET_KEEPER', battingStyle: 'LEFT_HAND', jerseyNumber: 32, country: 'India', age: 25, teamId: mumbaiIndians.id },
-      { name: 'Suryakumar Yadav', role: 'BATSMAN', battingStyle: 'RIGHT_HAND', jerseyNumber: 63, country: 'India', age: 33, teamId: mumbaiIndians.id },
-      { name: 'Jasprit Bumrah', role: 'BOWLER', bowlingStyle: 'FAST', jerseyNumber: 93, country: 'India', age: 30, teamId: mumbaiIndians.id },
-      { name: 'Hardik Pandya', role: 'ALL_ROUNDER', battingStyle: 'RIGHT_HAND', bowlingStyle: 'MEDIUM', jerseyNumber: 33, country: 'India', age: 30, teamId: mumbaiIndians.id },
-    ]
+    data: createSquad(mumbaiIndians.id),
   })
 
-  // Create players for Chennai Super Kings
   await prisma.player.createMany({
-    data: [
-      { name: 'MS Dhoni', role: 'WICKET_KEEPER', battingStyle: 'RIGHT_HAND', jerseyNumber: 7, country: 'India', age: 42, teamId: chennaiSuperKings.id },
-      { name: 'Ravindra Jadeja', role: 'ALL_ROUNDER', battingStyle: 'LEFT_HAND', bowlingStyle: 'SPIN_OFF', jerseyNumber: 8, country: 'India', age: 35, teamId: chennaiSuperKings.id },
-      { name: 'Ruturaj Gaikwad', role: 'BATSMAN', battingStyle: 'RIGHT_HAND', jerseyNumber: 31, country: 'India', age: 27, teamId: chennaiSuperKings.id },
-      { name: 'Deepak Chahar', role: 'BOWLER', bowlingStyle: 'MEDIUM', jerseyNumber: 90, country: 'India', age: 31, teamId: chennaiSuperKings.id },
-      { name: 'Devon Conway', role: 'BATSMAN', battingStyle: 'LEFT_HAND', jerseyNumber: 88, country: 'New Zealand', age: 32, teamId: chennaiSuperKings.id },
-    ]
+    data: createSquad(chennaiSuperKings.id),
   })
 
-  // Create players for Royal Challengers Bangalore
   await prisma.player.createMany({
-    data: [
-      { name: 'Faf du Plessis', role: 'BATSMAN', battingStyle: 'RIGHT_HAND', jerseyNumber: 18, country: 'South Africa', age: 39, teamId: royalChallengers.id },
-      { name: 'Virat Kohli', role: 'BATSMAN', battingStyle: 'RIGHT_HAND', jerseyNumber: 18, country: 'India', age: 35, teamId: royalChallengers.id },
-      { name: 'Glenn Maxwell', role: 'ALL_ROUNDER', battingStyle: 'RIGHT_HAND', bowlingStyle: 'SPIN_OFF', jerseyNumber: 32, country: 'Australia', age: 35, teamId: royalChallengers.id },
-      { name: 'Mohammed Siraj', role: 'BOWLER', bowlingStyle: 'FAST', jerseyNumber: 13, country: 'India', age: 30, teamId: royalChallengers.id },
-      { name: 'Dinesh Karthik', role: 'WICKET_KEEPER', battingStyle: 'RIGHT_HAND', jerseyNumber: 5, country: 'India', age: 38, teamId: royalChallengers.id },
-    ]
+    data: createSquad(royalChallengers.id),
   })
 
   // Create sample matches
