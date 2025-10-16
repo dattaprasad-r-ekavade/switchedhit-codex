@@ -22,7 +22,8 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
         include: {
           homeTeam: true
         }
-      }
+      },
+      owner: true,
     }
   })
 
@@ -67,6 +68,10 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
             <div className="flex justify-between">
               <span className="text-muted-foreground">Founded:</span>
               <span className="font-medium">{team.founded || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Owner:</span>
+              <span className="font-medium">{team.owner?.name || team.owner?.email || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Players:</span>

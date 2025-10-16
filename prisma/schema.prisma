@@ -19,12 +19,16 @@ model Team {
   captain     String?
   coach       String?
   founded     Int?
+  ownerId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   players     Player[]
   homeMatches Match[]  @relation("HomeTeam")
   awayMatches Match[]  @relation("AwayTeam")
+  owner       User?    @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
 }
 
 model Player {
@@ -106,8 +110,25 @@ model Ball {
   wicketType      String?  // BOWLED, CAUGHT, LBW, RUN_OUT, STUMPED
   dismissedPlayer String?
   createdAt       DateTime @default(now())
-  
+
   innings         Innings  @relation(fields: [inningsId], references: [id], onDelete: Cascade)
   
   @@index([inningsId])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String?
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  teams        Team[]
 }

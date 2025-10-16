@@ -1,8 +1,34 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, UserRole } from '@prisma/client'
+import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
+  const adminPasswordHash = await hash('admin123', 10)
+  const userPasswordHash = await hash('user123', 10)
+
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@switchedhit.com' },
+    update: {},
+    create: {
+      email: 'admin@switchedhit.com',
+      name: 'League Admin',
+      passwordHash: adminPasswordHash,
+      role: UserRole.ADMIN,
+    },
+  })
+
+  const standardUser = await prisma.user.upsert({
+    where: { email: 'user@switchedhit.com' },
+    update: {},
+    create: {
+      email: 'user@switchedhit.com',
+      name: 'Team Manager',
+      passwordHash: userPasswordHash,
+      role: UserRole.USER,
+    },
+  })
+
   // Create teams
   const mumbaiIndians = await prisma.team.create({
     data: {
@@ -12,6 +38,7 @@ async function main() {
       captain: 'Rohit Sharma',
       coach: 'Mahela Jayawardene',
       founded: 2008,
+      ownerId: adminUser.id,
     }
   })
 
@@ -23,6 +50,7 @@ async function main() {
       captain: 'MS Dhoni',
       coach: 'Stephen Fleming',
       founded: 2008,
+      ownerId: standardUser.id,
     }
   })
 
@@ -34,6 +62,7 @@ async function main() {
       captain: 'Faf du Plessis',
       coach: 'Sanjay Bangar',
       founded: 2008,
+      ownerId: standardUser.id,
     }
   })
 

@@ -2,8 +2,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export default async function TeamsPage() {
+  const session = await getServerSession(authOptions)
   const teams = await prisma.team.findMany({
     include: {
       _count: {
@@ -22,9 +25,30 @@ export default async function TeamsPage() {
           <h1 className="text-4xl font-bold">Teams</h1>
           <p className="text-muted-foreground">Manage cricket teams</p>
         </div>
-        <Link href="/admin/teams/create">
-          <Button>Create Team</Button>
-        </Link>
+        {(() => {
+          if (!session?.user) {
+            const callbackUrl = encodeURIComponent('/teams/create')
+            return (
+              <Link href={`/auth/login?callbackUrl=${callbackUrl}`}>
+                <Button>Sign in to create</Button>
+              </Link>
+            )
+          }
+
+          if (session.user.role === 'ADMIN') {
+            return (
+              <Link href="/admin/teams/create">
+                <Button>Create Team</Button>
+              </Link>
+            )
+          }
+
+          return (
+            <Link href="/teams/create">
+              <Button>Create Team</Button>
+            </Link>
+          )
+        })()}
       </div>
 
       {teams.length === 0 ? (
