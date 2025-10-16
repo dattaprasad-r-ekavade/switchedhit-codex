@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  shortName   String
+  logoUrl     String?
+  homeGround  String?
+  captain     String?
+  coach       String?
+  founded     Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  players     Player[]
+  homeMatches Match[]  @relation("HomeTeam")
+  awayMatches Match[]  @relation("AwayTeam")
+}
+
+model Player {
+  id           String   @id @default(cuid())
+  name         String
+  role         String   // BATSMAN, BOWLER, ALL_ROUNDER, WICKET_KEEPER
+  battingStyle String?  // RIGHT_HAND, LEFT_HAND
+  bowlingStyle String?  // FAST, MEDIUM, SPIN_OFF, SPIN_LEG
+  jerseyNumber Int?
+  country      String?
+  age          Int?
+  teamId       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  team         Team?    @relation(fields: [teamId], references: [id])
+  
+  @@index([teamId])
+}
+
+model Match {
+  id              String    @id @default(cuid())
+  matchNumber     Int
+  venue           String
+  date            DateTime
+  matchType       String    // T20, ODI, TEST
+  status          String    // SCHEDULED, IN_PROGRESS, COMPLETED, ABANDONED
+  tossWinner      String?
+  tossDecision    String?   // BAT, BOWL
+  result          String?
+  winnerTeamId    String?
+  winByRuns       Int?
+  winByWickets    Int?
+  manOfTheMatch   String?
+  homeTeamId      String
+  awayTeamId      String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  homeTeam        Team      @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam        Team      @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  innings         Innings[]
+  
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([status])
+}
+
+model Innings {
+  id             String   @id @default(cuid())
+  matchId        String
+  battingTeamId  String
+  bowlingTeamId  String
+  inningsNumber  Int
+  totalRuns      Int      @default(0)
+  totalWickets   Int      @default(0)
+  totalOvers     Float    @default(0)
+  extras         Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  match          Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  balls          Ball[]
+  
+  @@index([matchId])
+}
+
+model Ball {
+  id              String   @id @default(cuid())
+  inningsId       String
+  overNumber      Int
+  ballNumber      Int
+  batsmanName     String
+  bowlerName      String
+  runs            Int      @default(0)
+  isWicket        Boolean  @default(false)
+  isExtra         Boolean  @default(false)
+  extraType       String?  // WIDE, NO_BALL, BYE, LEG_BYE
+  wicketType      String?  // BOWLED, CAUGHT, LBW, RUN_OUT, STUMPED
+  dismissedPlayer String?
+  createdAt       DateTime @default(now())
+  
+  innings         Innings  @relation(fields: [inningsId], references: [id], onDelete: Cascade)
+  
+  @@index([inningsId])
+}
