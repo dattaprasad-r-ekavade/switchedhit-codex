@@ -91,7 +91,8 @@ export class CricketSimulator {
   public simulateInnings(
     battingPlayers: PlayerStats[],
     bowlingPlayers: PlayerStats[],
-    maxOvers: number = 20
+    maxOvers: number = 20,
+    targetScore?: number
   ): InningsResult {
     let totalRuns = 0
     let totalWickets = 0
@@ -127,6 +128,10 @@ export class CricketSimulator {
       // Change bowler every over
       if (totalBalls % 6 === 0) {
         currentBowlerIndex++
+      }
+
+      if (targetScore && totalRuns >= targetScore) {
+        break
       }
     }
     
