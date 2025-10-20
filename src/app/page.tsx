@@ -1,9 +1,18 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getServerSession } from 'next-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export default async function Home() {
+  const session = await getServerSession(authOptions)
+
+  if (session?.user) {
+    redirect('/dashboard')
+  }
+
   const teamsCount = await prisma.team.count()
   const matchesCount = await prisma.match.count()
   const playersCount = await prisma.player.count()

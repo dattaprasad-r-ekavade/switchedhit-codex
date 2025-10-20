@@ -48,19 +48,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'A team with this name or short name already exists.' }, { status: 409 })
     }
 
-    let ownerId = session.user.id
+    const ownerEmail = body.ownerEmail?.trim()
 
-    if (body.ownerEmail && session.user.role === 'ADMIN') {
-      const owner = await prisma.user.findUnique({
-        where: { email: body.ownerEmail.trim() },
-      })
-
-      if (!owner) {
-        return NextResponse.json({ error: 'Owner email does not match any user.' }, { status: 404 })
-      }
-
-      ownerId = owner.id
+    if (!ownerEmail) {
+      return NextResponse.json({ error: 'Owner email is required.' }, { status: 400 })
     }
+
+    const owner = await prisma.user.findUnique({
+      where: { email: ownerEmail },
+    })
+
+    if (!owner || owner.role === 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Owner must be an existing non-admin user.' },
+        { status: 400 }
+      )
+    }
+
+    const ownerId = owner.id
 
     const foundedValue =
       typeof body.founded === 'number'
@@ -103,16 +108,19 @@ export async function POST(request: Request) {
         })
       }
 
-      await tx.user.update({
-        where: { id: ownerId },
-        data: { hasCompletedOnboarding: true },
-      })
+      if (!owner.hasCompletedOnboarding) {
+        await tx.user.update({
+          where: { id: ownerId },
+          data: { hasCompletedOnboarding: true },
+        })
+      }
 
       return createdTeam
     })
 
     revalidatePath('/teams')
     revalidatePath('/admin')
+    revalidatePath('/dashboard')
 
     return NextResponse.json({ success: true, teamId: team.id })
   } catch (error) {

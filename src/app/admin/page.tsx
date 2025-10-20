@@ -30,23 +30,6 @@ export default function AdminPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Player Management</CardTitle>
-            <CardDescription>Manage player roster</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Link href="/admin/players/create">
-                <Button className="w-full">Add New Player</Button>
-              </Link>
-              <Link href="/admin/players">
-                <Button variant="outline" className="w-full">View All Players</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>Match Management</CardTitle>
             <CardDescription>Schedule and simulate matches</CardDescription>
           </CardHeader>

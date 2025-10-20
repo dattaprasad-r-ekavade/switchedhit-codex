@@ -30,6 +30,10 @@ export default function TeamForm({ isAdmin = false }: TeamFormProps) {
 
     if (isAdmin) {
       payload.ownerEmail = (formData.get('ownerEmail') as string | null)?.trim() || undefined
+      if (!payload.ownerEmail) {
+        setError('Owner email is required when creating a team as an administrator.')
+        return
+      }
     }
 
     if (!payload.name || !payload.shortName) {
@@ -169,17 +173,18 @@ export default function TeamForm({ isAdmin = false }: TeamFormProps) {
       {isAdmin && (
         <div className="space-y-2">
           <label htmlFor="ownerEmail" className="text-sm font-medium">
-            Owner Email
+            Owner email *
           </label>
           <input
             id="ownerEmail"
             name="ownerEmail"
             type="email"
+            required
             className="w-full rounded-md border px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            placeholder="Assign team to user by email (optional)"
+            placeholder="manager@example.com"
           />
           <p className="text-xs text-muted-foreground">
-            Leave blank to assign the team to your admin account.
+            Teams must belong to a non-admin user. Provide the manager&apos;s email to assign ownership.
           </p>
         </div>
       )}

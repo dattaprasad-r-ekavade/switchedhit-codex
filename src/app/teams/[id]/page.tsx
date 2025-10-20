@@ -1,10 +1,21 @@
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
+import { getServerSession } from 'next-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export default async function TeamDetailPage({ params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user) {
+    const callbackUrl = encodeURIComponent(`/teams/${params.id}`)
+    redirect(`/auth/login?callbackUrl=${callbackUrl}`)
+  }
+
+  const isAdmin = session.user.role === 'ADMIN'
+
   const team = await prisma.team.findUnique({
     where: { id: params.id },
     include: {
@@ -13,21 +24,25 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
         take: 5,
         orderBy: { date: 'desc' },
         include: {
-          awayTeam: true
-        }
+          awayTeam: true,
+        },
       },
       awayMatches: {
         take: 5,
         orderBy: { date: 'desc' },
         include: {
-          homeTeam: true
-        }
+          homeTeam: true,
+        },
       },
       owner: true,
-    }
+    },
   })
 
   if (!team) {
+    notFound()
+  }
+
+  if (!isAdmin && team.ownerId !== session.user.id) {
     notFound()
   }
 
@@ -37,22 +52,24 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold mb-2">{team.name}</h1>
+          <h1 className="mb-2 text-4xl font-bold">{team.name}</h1>
           <p className="text-xl text-muted-foreground">{team.shortName}</p>
         </div>
-        <Link href={`/admin/teams/${team.id}/edit`}>
-          <Button variant="outline">Edit Team</Button>
-        </Link>
+        {isAdmin && (
+          <Link href={`/admin/teams/${team.id}/edit`}>
+            <Button variant="outline">Edit team</Button>
+          </Link>
+        )}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Team Information</CardTitle>
+            <CardTitle>Team information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Captain:</span>
               <span className="font-medium">{team.captain || 'N/A'}</span>
@@ -62,7 +79,7 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
               <span className="font-medium">{team.coach || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Home Ground:</span>
+              <span className="text-muted-foreground">Home ground:</span>
               <span className="font-medium">{team.homeGround || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
@@ -74,7 +91,7 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
               <span className="font-medium">{team.owner?.name || team.owner?.email || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Total Players:</span>
+              <span className="text-muted-foreground">Total players:</span>
               <span className="font-medium">{team.players.length}</span>
             </div>
           </CardContent>
@@ -82,23 +99,23 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Matches</CardTitle>
-            <CardDescription>Last 5 matches</CardDescription>
+            <CardTitle>Recent matches</CardTitle>
+            <CardDescription>Last 5 fixtures</CardDescription>
           </CardHeader>
           <CardContent>
             {allMatches.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No matches played yet</p>
+              <p className="text-sm text-muted-foreground">No matches played yet.</p>
             ) : (
               <div className="space-y-2">
                 {allMatches.map((match) => (
                   <Link key={match.id} href={`/matches/${match.id}`}>
-                    <div className="text-sm border-b pb-2 hover:bg-accent hover:text-accent-foreground p-2 rounded cursor-pointer">
-                      <div className="font-medium">
+                    <div className="cursor-pointer rounded border-b border-border pb-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground">
+                      <div className="px-2 pt-2 font-medium">
                         {'homeTeam' in match ? match.homeTeam.name : team.name} vs{' '}
                         {'awayTeam' in match ? match.awayTeam.name : team.name}
                       </div>
-                      <div className="text-muted-foreground text-xs">
-                        {new Date(match.date).toLocaleDateString()} • {match.status}
+                      <div className="px-2 pb-2 text-xs text-muted-foreground">
+                        {new Date(match.date).toLocaleDateString()} - {match.status}
                       </div>
                     </div>
                   </Link>
@@ -116,25 +133,30 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
         </CardHeader>
         <CardContent>
           {team.players.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No players in this team</p>
+            <p className="text-sm text-muted-foreground">No players in this team.</p>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {team.players.map((player) => (
-                <div key={player.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div
+                  key={player.id}
+                  className="rounded-lg border border-border p-4 transition-shadow hover:shadow-md"
+                >
                   <div className="font-medium">{player.name}</div>
                   <div className="text-sm text-muted-foreground">{player.role}</div>
                   {player.jerseyNumber && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Jersey: #{player.jerseyNumber}
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Jersey: <span className="font-semibold text-foreground">#{player.jerseyNumber}</span>
                     </div>
                   )}
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Batting: <span className="font-semibold text-foreground">{player.battingSkill}</span> �?� Bowling:{' '}
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Batting:&nbsp;
+                    <span className="font-semibold text-foreground">{player.battingSkill}</span>&nbsp;|&nbsp;Bowling:&nbsp;
                     <span className="font-semibold text-foreground">{player.bowlingSkill}</span>
                   </div>
                   {player.country && (
                     <div className="text-xs text-muted-foreground">
-                      Country: <span className="font-semibold text-foreground">{player.country}</span>
+                      Country:&nbsp;
+                      <span className="font-semibold text-foreground">{player.country}</span>
                     </div>
                   )}
                 </div>

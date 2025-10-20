@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Navigation from '@/components/navigation'
 import { AuthProvider } from '@/components/providers/auth-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 
 export const metadata: Metadata = {
   title: 'SwitchedHit - T20 Cricket Simulation Platform',
@@ -14,13 +15,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="font-sans">
         <AuthProvider>
-          <Navigation />
-          <main className="container mx-auto px-4 py-8">
-            {children}
-          </main>
+          <ThemeProvider>
+            <Navigation>
+              {children}
+            </Navigation>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

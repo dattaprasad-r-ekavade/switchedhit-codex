@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
 
   if (hasCompletedOnboarding && pathname === ONBOARDING_PATH) {
     const url = request.nextUrl.clone()
-    url.pathname = '/teams'
+    url.pathname = '/dashboard'
     url.search = ''
     return NextResponse.redirect(url)
   }
