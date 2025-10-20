@@ -8,6 +8,12 @@ async function main() {
   const adminPasswordHash = await hash('admin123', 10)
   const userPasswordHash = await hash('user123', 10)
 
+  await prisma.ball.deleteMany()
+  await prisma.innings.deleteMany()
+  await prisma.match.deleteMany()
+  await prisma.player.deleteMany()
+  await prisma.team.deleteMany()
+
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@switchedhit.com' },
     update: {},
@@ -16,17 +22,31 @@ async function main() {
       name: 'League Admin',
       passwordHash: adminPasswordHash,
       role: UserRole.ADMIN,
+      hasCompletedOnboarding: true,
     },
   })
 
-  const standardUser = await prisma.user.upsert({
-    where: { email: 'user@switchedhit.com' },
+  const teamManagerOne = await prisma.user.upsert({
+    where: { email: 'manager.one@switchedhit.com' },
     update: {},
     create: {
-      email: 'user@switchedhit.com',
-      name: 'Team Manager',
+      email: 'manager.one@switchedhit.com',
+      name: 'Chennai Manager',
       passwordHash: userPasswordHash,
       role: UserRole.USER,
+      hasCompletedOnboarding: true,
+    },
+  })
+
+  const teamManagerTwo = await prisma.user.upsert({
+    where: { email: 'manager.two@switchedhit.com' },
+    update: {},
+    create: {
+      email: 'manager.two@switchedhit.com',
+      name: 'Bangalore Manager',
+      passwordHash: userPasswordHash,
+      role: UserRole.USER,
+      hasCompletedOnboarding: true,
     },
   })
 
@@ -51,7 +71,7 @@ async function main() {
       captain: 'MS Dhoni',
       coach: 'Stephen Fleming',
       founded: 2008,
-      ownerId: standardUser.id,
+      ownerId: teamManagerOne.id,
     }
   })
 
@@ -63,7 +83,7 @@ async function main() {
       captain: 'Faf du Plessis',
       coach: 'Sanjay Bangar',
       founded: 2008,
-      ownerId: standardUser.id,
+      ownerId: teamManagerTwo.id,
     }
   })
 

@@ -12,6 +12,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'You must be signed in to create a team.' }, { status: 401 })
   }
 
+  if (session.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Only admins can create teams.' }, { status: 403 })
+  }
+
   try {
     const body = await request.json() as {
       name?: string
@@ -66,6 +70,15 @@ export async function POST(request: Request) {
           : null
 
     const team = await prisma.$transaction(async (tx) => {
+      const existingOwnerTeam = await tx.team.findUnique({
+        where: { ownerId },
+        select: { id: true },
+      })
+
+      if (existingOwnerTeam) {
+        throw new Error('Owner already has a team.')
+      }
+
       const createdTeam = await tx.team.create({
         data: {
           name,
@@ -90,6 +103,11 @@ export async function POST(request: Request) {
         })
       }
 
+      await tx.user.update({
+        where: { id: ownerId },
+        data: { hasCompletedOnboarding: true },
+      })
+
       return createdTeam
     })
 
@@ -99,6 +117,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, teamId: team.id })
   } catch (error) {
     console.error('Failed to create team', error)
+
+    if (error instanceof Error && error.message === 'Owner already has a team.') {
+      return NextResponse.json({ error: error.message }, { status: 409 })
+    }
+
     return NextResponse.json({ error: 'Failed to create team.' }, { status: 500 })
   }
 }

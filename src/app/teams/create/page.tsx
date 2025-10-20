@@ -17,6 +17,14 @@ export default async function CreateTeamPage() {
     redirect(`/auth/login?callbackUrl=${callbackUrl}`)
   }
 
+  if (session.user.role !== 'ADMIN') {
+    if (session.user.hasCompletedOnboarding) {
+      redirect('/teams')
+    }
+
+    redirect('/onboarding')
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <Card>

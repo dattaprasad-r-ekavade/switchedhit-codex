@@ -68,19 +68,6 @@ const LAST_NAMES = [
   'Sodhi',
 ]
 
-const COUNTRIES = [
-  'India',
-  'Sri Lanka',
-  'Bangladesh',
-  'Pakistan',
-  'Australia',
-  'New Zealand',
-  'South Africa',
-  'England',
-  'West Indies',
-  'Afghanistan',
-]
-
 const BATTING_STYLES = ['RIGHT_HAND', 'LEFT_HAND'] as const
 const BOWLING_STYLES = ['FAST', 'MEDIUM', 'SPIN_OFF', 'SPIN_LEG'] as const
 
@@ -162,7 +149,7 @@ function generatePlayerRecord(role: RoleDistribution['role'], config: RoleDistri
     battingSkill,
     bowlingSkill,
     jerseyNumber: uniqueJerseyNumber(usedNumbers),
-    country: randomItem(COUNTRIES),
+    country: 'India',
     age: randomInt(19, 36),
   }
 }

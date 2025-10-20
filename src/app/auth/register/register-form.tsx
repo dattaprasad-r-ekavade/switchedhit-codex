@@ -50,11 +50,12 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       return
     }
 
+    const onboardingUrl = '/onboarding'
     const signInResponse = await signIn('credentials', {
       redirect: false,
       email,
       password,
-      callbackUrl: callbackUrl || '/',
+      callbackUrl: onboardingUrl,
     })
 
     setIsSubmitting(false)
@@ -64,7 +65,7 @@ export default function RegisterForm({ callbackUrl }: RegisterFormProps) {
       return
     }
 
-    router.push(signInResponse?.url || callbackUrl || '/')
+    router.push(signInResponse?.url || onboardingUrl)
   }
 
   return (

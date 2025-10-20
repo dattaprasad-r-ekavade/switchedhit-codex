@@ -18,6 +18,11 @@ export default async function TeamsPage() {
     }
   })
 
+  const needsOnboarding = Boolean(session?.user && !session.user.hasCompletedOnboarding)
+  const userTeamId = session?.user
+    ? teams.find((team) => team.ownerId === session.user.id)?.id ?? null
+    : null
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -27,7 +32,7 @@ export default async function TeamsPage() {
         </div>
         {(() => {
           if (!session?.user) {
-            const callbackUrl = encodeURIComponent('/teams/create')
+            const callbackUrl = encodeURIComponent('/onboarding')
             return (
               <Link href={`/auth/login?callbackUrl=${callbackUrl}`}>
                 <Button>Sign in to create</Button>
@@ -43,11 +48,23 @@ export default async function TeamsPage() {
             )
           }
 
-          return (
-            <Link href="/teams/create">
-              <Button>Create Team</Button>
-            </Link>
-          )
+          if (needsOnboarding) {
+            return (
+              <Link href="/onboarding">
+                <Button>Complete onboarding</Button>
+              </Link>
+            )
+          }
+
+          if (userTeamId) {
+            return (
+              <Link href={`/teams/${userTeamId}`}>
+                <Button variant="outline">View my team</Button>
+              </Link>
+            )
+          }
+
+          return null
         })()}
       </div>
 

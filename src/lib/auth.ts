@@ -40,6 +40,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           role: user.role,
+          hasCompletedOnboarding: user.hasCompletedOnboarding,
         }
       },
     }),
@@ -49,6 +50,20 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.role = user.role
+        token.hasCompletedOnboarding = user.hasCompletedOnboarding
+      } else if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            role: true,
+            hasCompletedOnboarding: true,
+          },
+        })
+
+        if (dbUser) {
+          token.role = dbUser.role
+          token.hasCompletedOnboarding = dbUser.hasCompletedOnboarding
+        }
       }
       return token
     },
@@ -56,6 +71,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.hasCompletedOnboarding = Boolean(token.hasCompletedOnboarding)
       }
       return session
     },

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 export default function Navigation() {
   const { data: session, status } = useSession()
   const isAdmin = session?.user?.role === 'ADMIN'
+  const needsOnboarding = Boolean(session?.user && !session.user.hasCompletedOnboarding)
 
   return (
     <nav className="border-b">
@@ -28,6 +29,13 @@ export default function Navigation() {
             {isAdmin && (
               <Link href="/admin" className="hover:text-primary transition-colors">
                 Admin
+              </Link>
+            )}
+            {needsOnboarding && (
+              <Link href="/onboarding">
+                <Button size="sm" className="ml-2">
+                  Complete setup
+                </Button>
               </Link>
             )}
             <div className="ml-2 flex items-center gap-2">
