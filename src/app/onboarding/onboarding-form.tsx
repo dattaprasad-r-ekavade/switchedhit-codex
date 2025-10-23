@@ -2,11 +2,13 @@
 
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { deriveShortName } from '@/lib/team-utils'
 import { Button } from '@/components/ui/button'
 
 export default function OnboardingForm() {
   const router = useRouter()
+  const { update } = useSession()
   const [teamName, setTeamName] = useState('')
   const [shortName, setShortName] = useState('')
   const [homeGround, setHomeGround] = useState('')
@@ -64,6 +66,9 @@ export default function OnboardingForm() {
     }
 
     const data = await response.json()
+
+    // Update session to reflect the completed onboarding status
+    await update()
 
     if (data.teamId) {
       router.replace(`/teams/${data.teamId}`)

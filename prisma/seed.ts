@@ -8,6 +8,7 @@ const prisma = new PrismaClient()
 async function main() {
   const adminPasswordHash = await hash('admin123', 10)
   const userPasswordHash = await hash('user123', 10)
+  const testPasswordHash = await hash('test@test.com', 10)
 
   await prisma.ball.deleteMany()
   await prisma.innings.deleteMany()
@@ -52,6 +53,18 @@ async function main() {
     },
   })
 
+  const testUser = await prisma.user.upsert({
+    where: { email: 'test@test.com' },
+    update: {},
+    create: {
+      email: 'test@test.com',
+      name: 'Test User',
+      passwordHash: testPasswordHash,
+      role: UserRole.USER,
+      hasCompletedOnboarding: true,
+    },
+  })
+
   // Create teams
   const mumbaiIndians = await prisma.team.create({
     data: {
@@ -89,6 +102,18 @@ async function main() {
     }
   })
 
+  const testTeam = await prisma.team.create({
+    data: {
+      name: 'Test Warriors',
+      shortName: 'TW',
+      homeGround: 'Test Stadium',
+      captain: 'Test Captain',
+      coach: 'Test Coach',
+      founded: 2024,
+      ownerId: testUser.id,
+    }
+  })
+
   const createSquad = (teamId: string) =>
     generateTeamPlayers().map((player) => ({
       ...player,
@@ -105,6 +130,10 @@ async function main() {
 
   await prisma.player.createMany({
     data: createSquad(royalChallengers.id),
+  })
+
+  await prisma.player.createMany({
+    data: createSquad(testTeam.id),
   })
 
   // Create sample matches
@@ -140,6 +169,14 @@ async function main() {
     ]
   })
 
+  // Create default simulation configuration
+  await prisma.simulationConfig.create({
+    data: {
+      ...BALANCED_SIMULATION_CONFIG,
+      notes: BALANCED_SIMULATION_CONFIG.notes ?? 'Balanced default tuning used for initial production rollout.',
+    },
+  })
+
   console.log('Database seeded successfully!')
 }
 
@@ -150,10 +187,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect()
-  })
-  await prisma.simulationConfig.create({
-    data: {
-      ...BALANCED_SIMULATION_CONFIG,
-      notes: BALANCED_SIMULATION_CONFIG.notes ?? 'Balanced default tuning used for initial production rollout.',
-    },
   })
