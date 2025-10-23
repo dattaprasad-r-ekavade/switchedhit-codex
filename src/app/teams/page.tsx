@@ -5,6 +5,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  calculateTeamRating,
+  getTeamRatingTier,
+  getTeamRatingLabel,
+  type TeamRatingTier,
+} from '@/lib/team-rating'
+
+const tierStyles: Record<TeamRatingTier, string> = {
+  ELITE: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600',
+  STRONG: 'border-sky-500/40 bg-sky-500/10 text-sky-600',
+  AVERAGE: 'border-amber-500/40 bg-amber-500/10 text-amber-600',
+  WEAK: 'border-rose-500/40 bg-rose-500/10 text-rose-600',
+}
 
 export default async function TeamsPage() {
   const session = await getServerSession(authOptions)
@@ -55,6 +68,17 @@ export default async function TeamsPage() {
 
   const teams = await prisma.team.findMany({
     include: {
+      players: {
+        select: {
+          id: true,
+          role: true,
+          battingVsPace: true,
+          battingVsSpin: true,
+          bowlingPace: true,
+          bowlingSpin: true,
+          wicketKeeping: true,
+        },
+      },
       _count: {
         select: { players: true },
       },
@@ -85,30 +109,43 @@ export default async function TeamsPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {teams.map((team) => (
-            <Link key={team.id} href={`/teams/${team.id}`}>
-              <Card className="flex h-full cursor-pointer flex-col transition-shadow hover:shadow-lg">
-                <CardHeader>
-                  <CardTitle>{team.name}</CardTitle>
-                  <CardDescription>{team.shortName}</CardDescription>
-                </CardHeader>
-                <CardContent className="mt-auto space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Captain:</span>
-                    <span className="font-medium">{team.captain || 'N/A'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Players:</span>
-                    <span className="font-medium">{team._count.players}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Home Ground:</span>
-                    <span className="font-medium">{team.homeGround || 'N/A'}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {teams.map((team) => {
+            const ratingValue = calculateTeamRating(team.players)
+            const tier = getTeamRatingTier(ratingValue)
+            const label = getTeamRatingLabel(tier)
+
+            return (
+              <Link key={team.id} href={`/teams/${team.id}`}>
+                <Card className="flex h-full cursor-pointer flex-col transition-shadow hover:shadow-lg">
+                  <CardHeader className="space-y-3">
+                    <div>
+                      <CardTitle>{team.name}</CardTitle>
+                      <CardDescription>{team.shortName}</CardDescription>
+                    </div>
+                    <span
+                      className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${tierStyles[tier]}`}
+                    >
+                      {label} · {ratingValue.toFixed(1)}
+                    </span>
+                  </CardHeader>
+                  <CardContent className="mt-auto space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Captain:</span>
+                      <span className="font-medium">{team.captain || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Players:</span>
+                      <span className="font-medium">{team._count.players}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Home Ground:</span>
+                      <span className="font-medium">{team.homeGround || 'N/A'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 # SwitchedHit Development Roadmap
 
-**Last Updated:** October 20, 2025  
-**Platform Completion:** ~35% | **SaaS Readiness:** ~15%
+**Last Updated:** October 21, 2025  
+**Platform Completion:** ~45% | **SaaS Readiness:** ~20%
 
 This document outlines the implementation roadmap for transforming SwitchedHit from a prototype into a production-ready SaaS cricket simulation platform.
 
@@ -17,11 +17,13 @@ This document outlines the implementation roadmap for transforming SwitchedHit f
 - **Player Generation:** Auto-creation with Indian nationality
 - **Match System:** Creation, simulation, results display
 - **Basic Statistics:** Ball-by-ball tracking
+- **Player Skill System:** Split batting pace/spin, bowling pace/spin, fielding, and keeping attributes
+- **Team Insights:** Team rating calculations with squad strength badges
+- **Simulation Engine:** Configurable probabilities with admin-managed tuning presets
 
 ### 🔴 Critical Gaps Blocking Production
 | Gap | Impact | Estimated Effort |
 |-----|--------|-----------------|
-| Unrealistic simulation engine | Core gameplay quality | 4-5 days |
 | No timeline/aging system | Zero long-term engagement | 1-2 weeks |
 | SQLite database | Cannot scale | 1-2 days |
 | No payment system | Cannot monetize | 1 week |
@@ -32,149 +34,11 @@ This document outlines the implementation roadmap for transforming SwitchedHit f
 
 ## 🎯 Development Phases
 
-### Phase 0: Foundation Fixes (Week 1)
-**Goal:** Fix critical design issues to enable all future work
-
-#### Task 0.1: Enhanced Player Skills (4-5 days)
-**Problem:** Current single batting/bowling skills too simplistic for strategic gameplay.
-
-**Solution - Split Skills System:**
-```prisma
-model Player {
-  // OLD (remove later): battingSkill, bowlingSkill
-  
-  // NEW - Batting
-  battingVsPace    Int  @default(50)  // vs fast/medium bowling
-  battingVsSpin    Int  @default(50)  // vs spin bowling
-  
-  // NEW - Bowling
-  bowlingPace      Int  @default(50)  // pace/seam bowling
-  bowlingSpin      Int  @default(50)  // spin bowling
-  
-  // NEW - Other
-  fieldingSkill    Int  @default(50)
-  wicketKeeping    Int  @default(0)   // 0 for non-keepers
-}
-```
-
-**Implementation Steps:**
-1. Update `prisma/schema.prisma` with new fields
-2. Create migration + data conversion script:
-   ```sql
-   ALTER TABLE Player ADD COLUMN battingVsPace INT DEFAULT 50;
-   ALTER TABLE Player ADD COLUMN battingVsSpin INT DEFAULT 50;
-   UPDATE Player SET battingVsPace = battingSkill, battingVsSpin = battingSkill;
-   ```
-3. Update `src/lib/player-generator.ts` with role-based skill ranges
-4. Update all UI components showing player skills
-
-**Files to Modify:**
-- `prisma/schema.prisma`
-- `src/lib/player-generator.ts`
-- `src/app/teams/[id]/page.tsx` (player display)
-- `src/components/forms/team-form.tsx` (if showing players)
-
----
-
-#### Task 0.2: Team Rating System (1 day)
-**Problem:** No way to assess team quality/progress.
-
-**Implementation:**
-1. Create `src/lib/team-rating.ts`:
-   ```typescript
-   export function calculateTeamRating(players: Player[]): number {
-     // Top 5 batsmen avg
-     const top5BatsmenAvg = players
-       .map(p => (p.battingVsPace + p.battingVsSpin) / 2)
-       .sort((a, b) => b - a)
-       .slice(0, 5)
-       .reduce((sum, val) => sum + val, 0) / 5;
-     
-     // Top 5 bowlers max
-     const top5BowlersAvg = players
-       .map(p => Math.max(p.bowlingPace, p.bowlingSpin))
-       .sort((a, b) => b - a)
-       .slice(0, 5)
-       .reduce((sum, val) => sum + val, 0) / 5;
-     
-     const keeper = players.find(p => p.role === 'WICKET_KEEPER');
-     const keeperSkill = keeper?.wicketKeeping || 50;
-     
-     return (top5BatsmenAvg + top5BowlersAvg + keeperSkill) / 11;
-   }
-   ```
-
-2. Display on team pages with color coding:
-   - 80+ (Green - Elite)
-   - 70-79 (Blue - Strong)
-   - 60-69 (Yellow - Average)
-   - <60 (Red - Weak)
-
-**Files to Create/Modify:**
-- `src/lib/team-rating.ts` (new)
-- `src/app/teams/page.tsx` (add rating badge)
-- `src/app/teams/[id]/page.tsx` (add rating card)
-
----
-
-#### Task 0.3: Advanced Simulation Config (2-3 days)
-**Problem:** Hardcoded simulation parameters, no admin control, unrealistic scoring.
-
-**Solution - Configurable 30+ Parameters:**
-```prisma
-model SimulationConfig {
-  id                    String   @id @default(cuid())
-  name                  String   @unique
-  isActive              Boolean  @default(false)
-  
-  // Base probabilities
-  baseWicketProbability Float    @default(0.05)
-  extraProbability      Float    @default(0.08)
-  
-  // Skill influences
-  battingSkillInfluence Float    @default(0.08)
-  bowlingSkillInfluence Float    @default(0.1)
-  
-  // Matchup advantages
-  paceVsSpinAdvantage   Float    @default(0.05)
-  
-  // Run distribution
-  sixThreshold          Float    @default(0.95)
-  fourThreshold         Float    @default(0.85)
-  
-  // Phase multipliers
-  powerplayMultiplier   Float    @default(1.2)
-  deathOversMultiplier  Float    @default(1.3)
-  
-  // Pitch conditions
-  pitchBounce           Float    @default(0.5)
-  pitchTurn             Float    @default(0.5)
-  boundarySize          Float    @default(0.5)
-  
-  // ... 20+ more parameters
-}
-```
-
-**Implementation Steps:**
-1. Add `SimulationConfig` model to schema
-2. Create admin interface at `/admin/simulation/config`:
-   - Tabbed UI (Basic, Advanced, Pitch Conditions, Test)
-   - Preset configurations (Balanced, Batting Paradise, Bowler Friendly)
-   - Test simulation preview
-3. Update `src/lib/simulation.ts`:
-   - Load active config from DB
-   - Apply matchup logic (pace bowler vs batsman's pace skill)
-   - Apply phase multipliers (powerplay/death overs)
-   - Apply pressure factors (chasing, required run rate)
-4. Seed default config
-
-**Files to Create/Modify:**
-- `prisma/schema.prisma` (add model)
-- `src/lib/simulation.ts` (major refactor)
-- `src/app/admin/simulation/config/page.tsx` (new)
-- `src/app/api/simulation/config/route.ts` (new)
-
----
+### Phase 0: Foundation Fixes (Completed October 21, 2025)
+- Delivered granular player skills with updated generators, migrations, and UI displays.
+- Introduced team rating metrics with colour-coded badges on admin and detail pages.
+- Rebuilt the simulation engine around a configurable parameter set and new admin console.
+- Seeded default tuning presets and ensured active configuration management.
 
 ### Phase 1: Timeline & Aging System (Week 2-3)
 **Goal:** Implement core game progression mechanic

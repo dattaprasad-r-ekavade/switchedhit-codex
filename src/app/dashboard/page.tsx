@@ -116,13 +116,17 @@ export default async function DashboardPage() {
       },
       players: {
         take: 5,
-        orderBy: { battingSkill: 'desc' },
+        orderBy: { battingVsPace: 'desc' },
         select: {
           id: true,
           name: true,
           role: true,
-          battingSkill: true,
-          bowlingSkill: true,
+          battingVsPace: true,
+          battingVsSpin: true,
+          bowlingPace: true,
+          bowlingSpin: true,
+          fieldingSkill: true,
+          wicketKeeping: true,
         },
       },
     },
@@ -184,8 +188,10 @@ export default async function DashboardPage() {
                 team.players.length === 0
                   ? 'N/A'
                   : Math.round(
-                      team.players.reduce((sum, player) => sum + player.battingSkill, 0) /
-                        team.players.length
+                      team.players.reduce(
+                        (sum, player) => sum + (player.battingVsPace + player.battingVsSpin) / 2,
+                        0
+                      ) / team.players.length
                     )
               }
               description="Mean batting skill rating across the squad"
@@ -238,10 +244,27 @@ export default async function DashboardPage() {
                       <div className="font-medium text-foreground">{player.name}</div>
                       <div className="text-xs text-muted-foreground">{player.role}</div>
                       <div className="mt-2 text-xs text-muted-foreground">
-                        Batting:&nbsp;
-                        <span className="font-semibold text-foreground">{player.battingSkill}</span>&nbsp;|&nbsp;Bowling:&nbsp;
-                        <span className="font-semibold text-foreground">{player.bowlingSkill}</span>
+                        Batting (P/S):&nbsp;
+                        <span className="font-semibold text-foreground">{player.battingVsPace}</span>
+                        &nbsp;/&nbsp;
+                        <span className="font-semibold text-foreground">{player.battingVsSpin}</span>
                       </div>
+                      <div className="text-xs text-muted-foreground">
+                        Bowling (P/S):&nbsp;
+                        <span className="font-semibold text-foreground">{player.bowlingPace}</span>
+                        &nbsp;/&nbsp;
+                        <span className="font-semibold text-foreground">{player.bowlingSpin}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Fielding:&nbsp;
+                        <span className="font-semibold text-foreground">{player.fieldingSkill}</span>
+                      </div>
+                      {player.wicketKeeping > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          Wicket keeping:&nbsp;
+                          <span className="font-semibold text-foreground">{player.wicketKeeping}</span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

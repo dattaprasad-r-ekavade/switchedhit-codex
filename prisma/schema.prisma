@@ -35,8 +35,15 @@ model Player {
   role         String // BATSMAN, BOWLER, ALL_ROUNDER, WICKET_KEEPER
   battingStyle String? // RIGHT_HAND, LEFT_HAND
   bowlingStyle String? // FAST, MEDIUM, SPIN_OFF, SPIN_LEG
+  // Legacy aggregate skills retained for backward compatibility.
   battingSkill Int      @default(50)
   bowlingSkill Int      @default(50)
+  battingVsPace Int     @default(50)
+  battingVsSpin Int     @default(50)
+  bowlingPace   Int     @default(50)
+  bowlingSpin   Int     @default(50)
+  fieldingSkill Int     @default(50)
+  wicketKeeping Int     @default(0)
   jerseyNumber Int?
   country      String?
   age          Int?
@@ -132,4 +139,68 @@ model User {
   updatedAt              DateTime @updatedAt
 
   team Team?
+}
+
+model SimulationConfig {
+  id                       String   @id @default(cuid())
+  name                     String   @unique
+  isActive                 Boolean  @default(false)
+
+  baseWicketProbability    Float    @default(0.05)
+  extraProbability         Float    @default(0.08)
+
+  battingSkillInfluence    Float    @default(0.08)
+  bowlingSkillInfluence    Float    @default(0.1)
+  fieldingSkillInfluence   Float    @default(0.04)
+  keeperSkillInfluence     Float    @default(0.06)
+
+  paceVsSpinAdvantage      Float    @default(0.05)
+  leftHandedPaceBonus      Float    @default(0.02)
+  swingFactor              Float    @default(0.04)
+  spinFactor               Float    @default(0.04)
+
+  sixThreshold             Float    @default(0.95)
+  fourThreshold            Float    @default(0.85)
+  twoThreshold             Float    @default(0.7)
+  singleThreshold          Float    @default(0.5)
+
+  powerplayMultiplier      Float    @default(1.2)
+  middleOversMultiplier    Float    @default(1.0)
+  deathOversMultiplier     Float    @default(1.3)
+  chasingPressureBase      Float    @default(0.03)
+  requiredRunRatePressure  Float    @default(0.06)
+  partnershipStability     Float    @default(0.04)
+  momentumSwing            Float    @default(0.05)
+
+  pitchBounce              Float    @default(0.5)
+  pitchTurn                Float    @default(0.5)
+  boundarySize             Float    @default(0.5)
+  outfieldSpeed            Float    @default(0.5)
+  humidityFactor           Float    @default(0.4)
+  dewFactor                Float    @default(0.3)
+
+  seamEffectiveness        Float    @default(0.6)
+  spinEffectiveness        Float    @default(0.6)
+  yorkerSuccessRate        Float    @default(0.4)
+  bouncerSuccessRate       Float    @default(0.35)
+
+  aggressionBase           Float    @default(0.5)
+  aggressionPowerplay      Float    @default(0.65)
+  aggressionDeath          Float    @default(0.75)
+
+  runOutSuccess            Float    @default(0.35)
+  dropCatchPenalty         Float    @default(0.2)
+  groundFielding           Float    @default(0.5)
+
+  noBallFrequency          Float    @default(0.02)
+  wideFrequency            Float    @default(0.05)
+  byeLegByeFrequency       Float    @default(0.01)
+
+  edgeToSlipProbability    Float    @default(0.03)
+  topEdgeProbability       Float    @default(0.02)
+
+  notes                    String?
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }

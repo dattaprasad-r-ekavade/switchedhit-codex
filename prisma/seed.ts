@@ -1,6 +1,7 @@
 import { PrismaClient, UserRole } from '@prisma/client'
 import { hash } from 'bcryptjs'
 import { generateTeamPlayers } from '../src/lib/player-generator'
+import { BALANCED_SIMULATION_CONFIG } from '../src/lib/simulation-config-presets'
 
 const prisma = new PrismaClient()
 
@@ -11,6 +12,7 @@ async function main() {
   await prisma.ball.deleteMany()
   await prisma.innings.deleteMany()
   await prisma.match.deleteMany()
+  await prisma.simulationConfig.deleteMany()
   await prisma.player.deleteMany()
   await prisma.team.deleteMany()
 
@@ -148,4 +150,10 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect()
+  })
+  await prisma.simulationConfig.create({
+    data: {
+      ...BALANCED_SIMULATION_CONFIG,
+      notes: BALANCED_SIMULATION_CONFIG.notes ?? 'Balanced default tuning used for initial production rollout.',
+    },
   })
