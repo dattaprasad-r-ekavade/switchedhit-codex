@@ -52,6 +52,7 @@ SwitchedHit is a T20 cricket simulation platform built with **Next.js 13**, **Ta
    - Copy `.env.example` to `.env` if the example file exists, otherwise edit `.env` directly.
    - Set `DATABASE_URL` (defaults to `file:./dev.db` for SQLite).
    - Set `NEXTAUTH_SECRET` to a secure random string.
+   - Set `CRON_SECRET` for webhook-based scheduled tasks (see [CRON_SETUP.md](./CRON_SETUP.md)).
 
 4. Set up the database:
    ```bash
@@ -104,15 +105,24 @@ switchedhit-codex/
 
 ## Default Accounts
 
-The seed script provisions two helpful accounts:
+The seed script provisions these helpful accounts:
 
 | Role   | Email                 | Password |
 | ------ | --------------------- | -------- |
 | Admin  | `admin@switchedhit.com` | `admin123` |
 | User   | `user@switchedhit.com`  | `user123`  |
+| Test   | `test@test.com`         | `test@test.com` |
 
 - Admins can access `/admin`, create teams, and optionally assign ownership by email.
 - Users can create teams via `/teams/create`; ownership is automatically linked to their account.
+
+## Scheduled Tasks (Cron Jobs)
+
+The platform includes automated timeline advancement and player aging features. For production deployment on serverless platforms like Vercel:
+
+- See **[CRON_SETUP.md](./CRON_SETUP.md)** for complete webhook configuration guide
+- Recommended: Use cron-job.org or GitHub Actions to trigger `/api/cron/advance-timeline` daily
+- Local development uses `node-cron` automatically
 
 ## Feature Walkthrough
 

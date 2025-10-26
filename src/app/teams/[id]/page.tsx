@@ -183,7 +183,10 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
                   className="rounded-lg border border-border p-4 transition-shadow hover:shadow-md"
                 >
                   <div className="font-medium">{player.name}</div>
-                  <div className="text-sm text-muted-foreground">{player.role}</div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>{player.role}</span>
+                    <span>Age {player.age}</span>
+                  </div>
                   {player.jerseyNumber && (
                     <div className="mt-1 text-xs text-muted-foreground">
                       Jersey: <span className="font-semibold text-foreground">#{player.jerseyNumber}</span>

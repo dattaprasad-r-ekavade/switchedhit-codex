@@ -1,7 +1,7 @@
 # SwitchedHit Development Roadmap
 
-**Last Updated:** October 21, 2025  
-**Platform Completion:** ~45% | **SaaS Readiness:** ~20%
+**Last Updated:** October 23, 2025  
+**Platform Completion:** ~55% | **SaaS Readiness:** ~30%
 
 This document outlines the implementation roadmap for transforming SwitchedHit from a prototype into a production-ready SaaS cricket simulation platform.
 
@@ -20,11 +20,11 @@ This document outlines the implementation roadmap for transforming SwitchedHit f
 - **Player Skill System:** Split batting pace/spin, bowling pace/spin, fielding, and keeping attributes
 - **Team Insights:** Team rating calculations with squad strength badges
 - **Simulation Engine:** Configurable probabilities with admin-managed tuning presets
+- **Timeline & Aging System:** Game clock, automated player aging, retirement pipeline, and admin controls
 
 ### 🔴 Critical Gaps Blocking Production
 | Gap | Impact | Estimated Effort |
 |-----|--------|-----------------|
-| No timeline/aging system | Zero long-term engagement | 1-2 weeks |
 | SQLite database | Cannot scale | 1-2 days |
 | No payment system | Cannot monetize | 1 week |
 | Weak security | Legal/trust risk | 4-5 days |
@@ -40,139 +40,11 @@ This document outlines the implementation roadmap for transforming SwitchedHit f
 - Rebuilt the simulation engine around a configurable parameter set and new admin console.
 - Seeded default tuning presets and ensured active configuration management.
 
-### Phase 1: Timeline & Aging System (Week 2-3)
-**Goal:** Implement core game progression mechanic
-
-**Critical Context:** This is the FOUNDATION for:
-- Training effectiveness (varies by age)
-- League seasons (time-based)
-- Player retirement & replacement
-- Long-term user retention
-
-#### Task 1.1: Database Schema (2 hours)
-```prisma
-model GameTime {
-  id            String   @id @default("singleton")
-  currentDate   DateTime @default(now())
-  currentSeason String   @default("2025-26")
-  dayNumber     Int      @default(0)
-  weekNumber    Int      @default(0)  // 1 week = 1 game year
-  lastUpdated   DateTime @updatedAt
-  
-  @@unique([id])
-}
-
-model Player {
-  // Add to existing model
-  age              Int      @default(25)
-  peakAge          Int      @default(26)
-  retirementAge    Int      @default(40)
-  potentialGrowth  Int      @default(50)
-  careerStartDate  DateTime @default(now())
-  lastAgedDate     DateTime @default(now())
-}
-
-model PlayerAgeHistory {
-  id           String   @id @default(cuid())
-  playerId     String
-  age          Int
-  battingVsPace Int
-  battingVsSpin Int
-  recordedAt   DateTime @default(now())
-  
-  player       Player   @relation(fields: [playerId], references: [id])
-}
-```
-
-#### Task 1.2: Timeline Service (1-2 days)
-Create `src/lib/timeline.ts`:
-```typescript
-export async function advanceTimeline() {
-  const gameTime = await prisma.gameTime.findUnique({ where: { id: 'singleton' } });
-  
-  // Advance 1 day
-  const newDayNumber = gameTime.dayNumber + 1;
-  const newWeekNumber = Math.floor(newDayNumber / 7);
-  
-  await prisma.gameTime.update({
-    where: { id: 'singleton' },
-    data: {
-      dayNumber: newDayNumber,
-      weekNumber: newWeekNumber,
-      currentDate: new Date(gameTime.currentDate.getTime() + 24*60*60*1000)
-    }
-  });
-  
-  // If new week (= new year), trigger aging
-  if (newWeekNumber > gameTime.weekNumber) {
-    await ageAllPlayers();
-  }
-}
-```
-
-#### Task 1.3: Player Aging Service (2 days)
-Create `src/lib/player-aging.ts`:
-```typescript
-export async function ageAllPlayers() {
-  const players = await prisma.player.findMany();
-  
-  for (const player of players) {
-    const newAge = player.age + 1;
-    
-    // Apply skill degradation
-    let skillLoss = 0;
-    if (newAge >= 33 && newAge <= 36) skillLoss = -1;
-    else if (newAge >= 37 && newAge <= 39) skillLoss = -2;
-    else if (newAge >= 40) skillLoss = -5;
-    
-    if (newAge >= 40) {
-      // Retire player
-      await retirePlayer(player.id);
-      await generateYouthReplacement(player.teamId);
-    } else {
-      await prisma.player.update({
-        where: { id: player.id },
-        data: {
-          age: newAge,
-          battingVsPace: Math.max(0, player.battingVsPace + skillLoss),
-          battingVsSpin: Math.max(0, player.battingVsSpin + skillLoss),
-          // ... apply to all skills
-        }
-      });
-    }
-    
-    // Record in history
-    await prisma.playerAgeHistory.create({ /* ... */ });
-  }
-}
-```
-
-#### Task 1.4: Background Cron Job (1 day)
-Create `src/lib/cron.ts`:
-```typescript
-import cron from 'node-cron';
-import { advanceTimeline } from './timeline';
-
-// Run daily at midnight
-cron.schedule('0 0 * * *', async () => {
-  console.log('Advancing timeline...');
-  await advanceTimeline();
-});
-```
-
-Add to `src/app/layout.tsx` or create API route that initializes on app start.
-
-#### Task 1.5: Admin Interface (1-2 days)
-Create `/admin/timeline/page.tsx`:
-- Display current game time
-- Manual time advancement button (for testing)
-- View upcoming events (retirements)
-- View aging history
-
-**Package to Install:**
-```bash
-npm install node-cron
-```
+### Phase 1: Timeline & Aging System (Completed October 23, 2025)
+- Added `GameTime` singleton, player aging attributes, and historical tracking models with migrations.
+- Built timeline and player aging services powering automated weekly progression, retirements, and youth replacements.
+- Introduced daily cron scheduler alongside admin timeline dashboard and manual advancement controls.
+- Seeded timeline defaults, wired API endpoints, and refreshed UI surfaces with player age visibility.
 
 ---
 

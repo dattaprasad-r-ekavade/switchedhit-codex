@@ -121,6 +121,7 @@ export default async function DashboardPage() {
           id: true,
           name: true,
           role: true,
+          age: true,
           battingVsPace: true,
           battingVsSpin: true,
           bowlingPace: true,
@@ -242,7 +243,10 @@ export default async function DashboardPage() {
                   {team.players.map((player) => (
                     <div key={player.id} className="rounded-md border border-border p-3 text-sm">
                       <div className="font-medium text-foreground">{player.name}</div>
-                      <div className="text-xs text-muted-foreground">{player.role}</div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{player.role}</span>
+                        <span>Age {player.age}</span>
+                      </div>
                       <div className="mt-2 text-xs text-muted-foreground">
                         Batting (P/S):&nbsp;
                         <span className="font-semibold text-foreground">{player.battingVsPace}</span>

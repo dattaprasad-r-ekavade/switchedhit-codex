@@ -13,9 +13,11 @@ async function main() {
   await prisma.ball.deleteMany()
   await prisma.innings.deleteMany()
   await prisma.match.deleteMany()
-  await prisma.simulationConfig.deleteMany()
+  await prisma.playerAgeHistory.deleteMany()
   await prisma.player.deleteMany()
   await prisma.team.deleteMany()
+  await prisma.simulationConfig.deleteMany()
+  await prisma.gameTime.deleteMany()
 
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@switchedhit.com' },
@@ -174,6 +176,17 @@ async function main() {
     data: {
       ...BALANCED_SIMULATION_CONFIG,
       notes: BALANCED_SIMULATION_CONFIG.notes ?? 'Balanced default tuning used for initial production rollout.',
+    },
+  })
+
+  // Initialize game timeline
+  await prisma.gameTime.create({
+    data: {
+      id: 'singleton',
+      currentDate: new Date('2025-03-01T00:00:00.000Z'),
+      currentSeason: '2025-26',
+      dayNumber: 0,
+      weekNumber: 0,
     },
   })
 

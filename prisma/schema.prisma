@@ -46,10 +46,16 @@ model Player {
   wicketKeeping Int     @default(0)
   jerseyNumber Int?
   country      String?
-  age          Int?
+  age          Int      @default(24)
+  peakAge      Int      @default(27)
+  retirementAge Int     @default(40)
+  potentialGrowth Int   @default(55)
+  careerStartDate DateTime @default(now())
+  lastAgedDate   DateTime @default(now())
   teamId       String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  ageHistory   PlayerAgeHistory[]
 
   team Team? @relation(fields: [teamId], references: [id])
 
@@ -203,4 +209,28 @@ model SimulationConfig {
 
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
+}
+
+model GameTime {
+  id            String   @id @default("singleton")
+  currentDate   DateTime @default(now())
+  currentSeason String   @default("2025-26")
+  dayNumber     Int      @default(0)
+  weekNumber    Int      @default(0)
+  lastUpdated   DateTime @updatedAt
+
+  @@unique([id])
+}
+
+model PlayerAgeHistory {
+  id            String   @id @default(cuid())
+  playerId      String
+  age           Int
+  battingVsPace Int
+  battingVsSpin Int
+  recordedAt    DateTime @default(now())
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
 }

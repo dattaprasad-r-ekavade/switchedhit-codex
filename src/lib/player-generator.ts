@@ -201,6 +201,14 @@ function generatePlayerRecord(
   const battingStyle = randomItem(BATTING_STYLES)
   const bowlingStyle = resolveBowlingStyle(role, config)
   const skills = generateSkillProfile(role, bowlingStyle)
+  const age = randomInt(18, 36)
+  const peakAge = Math.max(age + randomInt(0, 4), 23)
+  const retirementAge = Math.max(peakAge + randomInt(5, 8), age + 6)
+  const potentialGrowth = randomInt(55, 95)
+  const careerStartDate = new Date()
+  careerStartDate.setFullYear(careerStartDate.getFullYear() - Math.max(1, age - 17))
+
+  const lastAgedDate = new Date()
 
   return {
     name: generatePlayerName(),
@@ -217,7 +225,12 @@ function generatePlayerRecord(
     wicketKeeping: skills.wicketKeeping,
     jerseyNumber: uniqueJerseyNumber(usedNumbers),
     country: 'India',
-    age: randomInt(19, 36),
+    age,
+    peakAge,
+    retirementAge,
+    potentialGrowth,
+    careerStartDate,
+    lastAgedDate,
   }
 }
 
@@ -237,4 +250,3 @@ export function generateTeamPlayers(
 
   return players
 }
-
