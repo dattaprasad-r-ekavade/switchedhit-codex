@@ -1,7 +1,7 @@
 # SwitchedHit Development Roadmap
 
-**Last Updated:** October 23, 2025  
-**Platform Completion:** ~55% | **SaaS Readiness:** ~30%
+**Last Updated:** October 26, 2025  
+**Platform Completion:** ~65% | **SaaS Readiness:** ~30%
 
 This document outlines the implementation roadmap for transforming SwitchedHit from a prototype into a production-ready SaaS cricket simulation platform.
 
@@ -21,6 +21,7 @@ This document outlines the implementation roadmap for transforming SwitchedHit f
 - **Team Insights:** Team rating calculations with squad strength badges
 - **Simulation Engine:** Configurable probabilities with admin-managed tuning presets
 - **Timeline & Aging System:** Game clock, automated player aging, retirement pipeline, and admin controls
+- **League System:** Multi-tier competitions with automated fixtures, standings dashboards, and promotion/relegation workflows (Completed Oct 26, 2025)
 
 ### 🔴 Critical Gaps Blocking Production
 | Gap | Impact | Estimated Effort |
@@ -48,8 +49,9 @@ This document outlines the implementation roadmap for transforming SwitchedHit f
 
 ---
 
-### Phase 2: Production Readiness (Week 4-5)
-**Goal:** Make platform secure, scalable, and monetizable
+### Phase 2: Production Readiness (Post-Development)
+**Goal:** Make platform secure, scalable, and monetizable  
+**Schedule:** Begin only after the core development phases are fully completed.
 
 #### Task 2.1: Migrate to PostgreSQL (1-2 days)
 **Why:** SQLite doesn't support concurrent writes, unsuitable for production.
@@ -227,53 +229,11 @@ Cache team data, league standings (5-30 min TTL).
 ### Phase 3: Core Features (Week 6-8)
 **Goal:** Build engaging gameplay mechanics
 
-#### Task 3.1: League System (2-3 weeks)
-
-**Schema:**
-```prisma
-model League {
-  id          String   @id @default(cuid())
-  name        String
-  tier        Int      // 1 = top division
-  season      String
-  maxTeams    Int      @default(16)
-  status      String   // UPCOMING, ACTIVE, COMPLETED
-  
-  standings   LeagueStanding[]
-  matches     Match[]
-}
-
-model LeagueStanding {
-  id          String   @id @default(cuid())
-  leagueId    String
-  teamId      String
-  played      Int      @default(0)
-  won         Int      @default(0)
-  lost        Int      @default(0)
-  points      Int      @default(0)
-  netRunRate  Float    @default(0)
-  
-  league      League   @relation(fields: [leagueId], references: [id])
-  team        Team     @relation(fields: [teamId], references: [id])
-  
-  @@unique([leagueId, teamId])
-}
-```
-
-**Implementation:**
-1. Admin league creation interface
-2. Season management (integrated with timeline)
-3. Automatic fixture generation
-4. Points calculation after each match
-5. Standings display page
-6. Promotion/relegation logic (top 3 up, bottom 3 down)
-
-**Files:**
-- `/admin/leagues/create/page.tsx`
-- `/leagues/[id]/standings/page.tsx`
-- `src/lib/league-utils.ts` (fixture generation, standings calculation)
-
----
+#### Task 3.1: League System (Completed October 26, 2025)
+- Added league and standings data models with automated migrations.
+- Built admin workflows for league creation with double round-robin fixture generation.
+- Implemented live standings updates, points calculations, and streak tracking after simulations.
+- Delivered promotion/relegation rollovers and public league tables with upcoming/results views.
 
 #### Task 3.2: Training System (1-2 weeks)
 
@@ -522,7 +482,7 @@ SMTP_PASSWORD="..."
 
 ### Development Order Matters
 ```
-Phase 0 (Skills/Simulation) → Phase 1 (Timeline/Aging) → Phase 2 (Production) → Phase 3 (Features)
+Phase 0 (Skills/Simulation) -> Phase 1 (Timeline/Aging) -> Phase 2 (Production, post-development) -> Phase 3 (Features)
 ```
 
 **Do NOT start training or leagues before timeline system is built.**

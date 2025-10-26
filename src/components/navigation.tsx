@@ -48,6 +48,7 @@ export default function Navigation({ children }: NavigationProps) {
     const publicLinks: NavItem[] = [
       { href: '/', label: 'Home' },
       { href: '/matches', label: 'Matches' },
+      { href: '/leagues', label: 'Leagues' },
     ]
 
     return (
@@ -94,12 +95,14 @@ export default function Navigation({ children }: NavigationProps) {
         { href: '/dashboard', label: 'Dashboard' },
         { href: '/teams', label: 'Teams' },
         { href: '/matches', label: 'Matches' },
+        { href: '/leagues', label: 'Leagues' },
         { href: '/admin', label: 'Admin' },
       ]
     : [
         { href: '/dashboard', label: 'Dashboard' },
         { href: '/teams', label: 'My Team' },
         { href: '/matches', label: 'Matches' },
+        { href: '/leagues', label: 'Leagues' },
       ]
 
   return (

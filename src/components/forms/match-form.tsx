@@ -10,13 +10,21 @@ type TeamOption = {
   shortName?: string | null
 }
 
+type LeagueOption = {
+  id: string
+  name: string
+  season: string
+  tier: number
+}
+
 type MatchFormProps = {
   teams: TeamOption[]
+  leagues?: LeagueOption[]
 }
 
 const MATCH_TYPES = ['T20', 'ODI', 'TEST'] as const
 
-export default function MatchForm({ teams }: MatchFormProps) {
+export default function MatchForm({ teams, leagues = [] }: MatchFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,9 +32,9 @@ export default function MatchForm({ teams }: MatchFormProps) {
   const sortedTeams = useMemo(
     () =>
       [...teams].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
       ),
-    [teams]
+    [teams],
   )
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -40,6 +48,7 @@ export default function MatchForm({ teams }: MatchFormProps) {
     const dateInput = (formData.get('date') as string | null)?.trim()
     const matchType = (formData.get('matchType') as string | null)?.trim()
     const matchNumberRaw = (formData.get('matchNumber') as string | null)?.trim()
+    const leagueId = (formData.get('leagueId') as string | null)?.trim()
 
     if (!homeTeamId || !awayTeamId) {
       setError('Select both home and away teams.')
@@ -77,22 +86,28 @@ export default function MatchForm({ teams }: MatchFormProps) {
         ? Number(matchNumberRaw)
         : undefined
 
+    const payload: Record<string, unknown> = {
+      homeTeamId,
+      awayTeamId,
+      venue,
+      date: scheduledAt.toISOString(),
+      matchType,
+      matchNumber,
+    }
+
+    if (leagueId) {
+      payload.leagueId = leagueId
+    }
+
     setIsSubmitting(true)
     setError(null)
 
     const response = await fetch('/api/matches', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        homeTeamId,
-        awayTeamId,
-        venue,
-        date: scheduledAt.toISOString(),
-        matchType,
-        matchNumber
-      })
+      body: JSON.stringify(payload),
     })
 
     if (!response.ok) {
@@ -231,10 +246,33 @@ export default function MatchForm({ teams }: MatchFormProps) {
         </div>
       </div>
 
+      {leagues.length > 0 && (
+        <div className="space-y-2">
+          <label htmlFor="leagueId" className="text-sm font-medium">
+            Assign to league
+          </label>
+          <select
+            id="leagueId"
+            name="leagueId"
+            className="w-full rounded-md border px-3 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            defaultValue=""
+          >
+            <option value="">Optional — select a league</option>
+            {leagues.map((league) => (
+              <option key={league.id} value={league.id}>
+                {league.name} · {league.season} · Tier {league.tier}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Selected league must include both teams. Points update automatically after simulation.
+          </p>
+        </div>
+      )}
+
       <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
         {isSubmitting ? 'Scheduling...' : 'Schedule match'}
       </Button>
     </form>
   )
 }
-

@@ -10,6 +10,7 @@ import {
   type BallResult,
   type PlayerStats as SimulatorPlayerStats,
 } from '@/lib/simulation'
+import { updateLeagueStandings } from '@/lib/league'
 
 type Params = {
   params: {
@@ -347,9 +348,17 @@ export async function POST(request: Request, { params }: Params) {
     })
   })
 
+  if (match.leagueId) {
+    await updateLeagueStandings(match.leagueId)
+  }
+
   revalidatePath('/matches')
   revalidatePath(`/matches/${match.id}`)
   revalidatePath('/admin')
+  if (match.leagueId) {
+    revalidatePath('/leagues')
+    revalidatePath(`/leagues/${match.leagueId}`)
+  }
 
   return NextResponse.json({ success: true })
 }

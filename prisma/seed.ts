@@ -13,6 +13,8 @@ async function main() {
   await prisma.ball.deleteMany()
   await prisma.innings.deleteMany()
   await prisma.match.deleteMany()
+  await prisma.leagueStanding.deleteMany()
+  await prisma.league.deleteMany()
   await prisma.playerAgeHistory.deleteMany()
   await prisma.player.deleteMany()
   await prisma.team.deleteMany()

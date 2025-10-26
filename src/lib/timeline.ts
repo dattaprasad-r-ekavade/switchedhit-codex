@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { ageAllPlayers } from '@/lib/player-aging'
+import { rolloverLeaguesForNewSeason } from '@/lib/league'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
@@ -44,6 +45,7 @@ export async function advanceTimeline(days: number = 1) {
   }
 
   const gameTime = await ensureGameTime()
+  const previousSeason = gameTime.currentSeason
 
   const newDayNumber = gameTime.dayNumber + days
   const newWeekNumber = Math.floor(newDayNumber / 7)
@@ -77,6 +79,9 @@ export async function advanceTimeline(days: number = 1) {
     }
   }
 
+  if (currentSeason !== previousSeason) {
+    await rolloverLeaguesForNewSeason(previousSeason, currentSeason)
+  }
+
   return updatedGameTime
 }
-

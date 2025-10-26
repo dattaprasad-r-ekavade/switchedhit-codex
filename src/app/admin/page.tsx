@@ -44,6 +44,23 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>League Management</CardTitle>
+            <CardDescription>Configure leagues and monitor standings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Link href="/admin/leagues/create">
+                <Button className="w-full">Create League</Button>
+              </Link>
+              <Link href="/admin/leagues">
+                <Button variant="outline" className="w-full">Manage Leagues</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

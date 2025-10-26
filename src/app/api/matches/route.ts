@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       date?: string
       matchType?: string
       matchNumber?: number
+      leagueId?: string
     }
 
     const homeTeamId = body.homeTeamId?.trim()
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     const matchType = body.matchType?.trim() || 'T20'
     const date = body.date ? new Date(body.date) : null
     const matchNumberInput = body.matchNumber
+    const leagueId = body.leagueId?.trim()
 
     if (!homeTeamId || !awayTeamId) {
       return NextResponse.json({ error: 'Home and away teams are required.' }, { status: 400 })
@@ -95,6 +97,35 @@ export async function POST(request: Request) {
       matchNumber = (_max.matchNumber ?? 0) + 1
     }
 
+    let leagueValidation: { id: string } | null = null
+
+    if (leagueId) {
+      const league = await prisma.league.findUnique({
+        where: { id: leagueId },
+        include: {
+          standings: {
+            select: { teamId: true },
+          },
+        },
+      })
+
+      if (!league) {
+        return NextResponse.json({ error: 'League could not be found.' }, { status: 404 })
+      }
+
+      if (league.status === 'COMPLETED') {
+        return NextResponse.json({ error: 'Cannot schedule matches in a completed league.' }, { status: 409 })
+      }
+
+      const allowedTeamIds = new Set(league.standings.map((standing) => standing.teamId))
+
+      if (!allowedTeamIds.has(homeTeamId) || !allowedTeamIds.has(awayTeamId)) {
+        return NextResponse.json({ error: 'Both teams must belong to the selected league.' }, { status: 400 })
+      }
+
+      leagueValidation = { id: league.id }
+    }
+
     const match = await prisma.match.create({
       data: {
         matchNumber,
@@ -103,13 +134,19 @@ export async function POST(request: Request) {
         matchType,
         status: 'SCHEDULED',
         homeTeamId,
-        awayTeamId
+        awayTeamId,
+        leagueId: leagueValidation?.id ?? null
       },
       select: { id: true }
     })
 
     revalidatePath('/matches')
     revalidatePath('/admin')
+
+    if (leagueValidation) {
+      revalidatePath('/leagues')
+      revalidatePath(`/leagues/${leagueValidation.id}`)
+    }
 
     return NextResponse.json({ success: true, matchId: match.id })
   } catch (error) {

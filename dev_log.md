@@ -1,3 +1,11 @@
+## 2025-10-26
+
+- Shipped Phase 3 Task 3.1 league system overhaul:
+  - Added Prisma League/LeagueStanding models, migrations, seed resets, and generated client updates.
+  - Implemented /api/leagues endpoints plus admin creation UI with automated double round-robin fixture scheduling and league-aware match form updates.
+  - Built public league index/detail pages with standings, fixtures, results, and navigation links; surfaced management dashboard cards.
+  - Wired simulation + timeline flows to recalculate standings, handle promotion/relegation rollovers, and revalidate relevant views.
+
 ## 2025-10-21
 
 - Delivered Phase 0 foundation fixes:

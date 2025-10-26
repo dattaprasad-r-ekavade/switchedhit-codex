@@ -8,16 +8,36 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminScheduleMatchPage() {
-  const teams = await prisma.team.findMany({
-    select: {
-      id: true,
-      name: true,
-      shortName: true
-    },
-    orderBy: {
-      name: 'asc'
-    }
-  })
+  const [teams, leagues] = await Promise.all([
+    prisma.team.findMany({
+      select: {
+        id: true,
+        name: true,
+        shortName: true
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    }),
+    prisma.league.findMany({
+      where: {
+        status: {
+          in: ['UPCOMING', 'ACTIVE']
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        season: true,
+        tier: true
+      },
+      orderBy: [
+        { season: 'desc' },
+        { tier: 'asc' },
+        { name: 'asc' }
+      ]
+    })
+  ])
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -29,7 +49,7 @@ export default async function AdminScheduleMatchPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <MatchForm teams={teams} />
+          <MatchForm teams={teams} leagues={leagues} />
         </CardContent>
       </Card>
     </div>

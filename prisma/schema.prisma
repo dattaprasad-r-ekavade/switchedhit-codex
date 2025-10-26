@@ -27,6 +27,7 @@ model Team {
   homeMatches Match[]  @relation("HomeTeam")
   awayMatches Match[]  @relation("AwayTeam")
   owner       User     @relation(fields: [ownerId], references: [id])
+  leagueStandings LeagueStanding[]
 }
 
 model Player {
@@ -78,16 +79,19 @@ model Match {
   manOfTheMatch String?
   homeTeamId    String
   awayTeamId    String
+  leagueId      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   homeTeam Team      @relation("HomeTeam", fields: [homeTeamId], references: [id])
   awayTeam Team      @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  league   League?   @relation(fields: [leagueId], references: [id])
   innings  Innings[]
 
   @@index([homeTeamId])
   @@index([awayTeamId])
   @@index([status])
+  @@index([leagueId])
 }
 
 model Innings {
@@ -233,4 +237,48 @@ model PlayerAgeHistory {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@index([playerId])
+}
+
+model League {
+  id         String          @id @default(cuid())
+  name       String
+  tier       Int
+  season     String
+  maxTeams   Int             @default(16)
+  status     LeagueStatus    @default(UPCOMING)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  standings  LeagueStanding[]
+  matches    Match[]
+
+  @@index([season, tier])
+}
+
+model LeagueStanding {
+  id          String   @id @default(cuid())
+  leagueId    String
+  teamId      String
+  played      Int      @default(0)
+  won         Int      @default(0)
+  lost        Int      @default(0)
+  tied        Int      @default(0)
+  noResult    Int      @default(0)
+  points      Int      @default(0)
+  netRunRate  Float    @default(0)
+  streak      String?  // e.g. WWW, LLL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  league      League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  team        Team     @relation(fields: [teamId], references: [id])
+
+  @@unique([leagueId, teamId])
+  @@index([teamId])
+}
+
+enum LeagueStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
 }
